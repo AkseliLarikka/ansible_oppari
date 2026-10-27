@@ -4,6 +4,95 @@
   become: true
   tasks:
 
-  - name: suorita eka kovennus
-    apt:
-      name:
+    - name: SSH-7408 koventamistoimenpiteet
+      block:
+        - name: SSH oletusportin muuttaminen 22 -> 2222
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?Port 22'
+            line: 'Port 2222'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Pääkäyttäjän (root) kirjautumisen estäminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PermitRootLogin'
+            line: 'PermitRootLogin no'
+            backup: yes
+          notify: Restart SSH
+          
+        - name: X11-forwardingin estäminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?X11Forwarding'
+            line: 'X11Forwarding no'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Idle-timeout välin asetuksen määrittäminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?ClientAliveInterval'
+            line: 'ClientAliveInterval 300'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Idle-timeout maksimin asetuksen määrittäminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?ClientAliveCountMax'
+            line: 'ClientAliveCountMax 2'
+            backup: yes
+          notify: Restart SSH
+
+        - name: TCP-forwardingin estäminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?AllowTcpForwarding'
+            line: 'AllowTcpForwarding no'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Lokitustason nostaminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?LogLevel'
+            line: 'LogLevel VERBOSE'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Maksimi kirjautumisyritysten rajoittaminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?MaxAuthTries'
+            line: 'MaxAuthTries 3'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Samanaikaisten istuntojen rajoittaminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?MaxSessions'
+            line: 'MaxSessions 2'
+            backup: yes
+          notify: Restart SSH
+
+        - name: TCPKeepAlive-ominaisuuden poistaminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?TCPKeepAlive'
+            line: 'TCPKeepAlive no'
+            backup: yes
+          notify: Restart SSH
+
+        - name: Agent-forwardingin estäminen
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?AllowAgentForwarding'
+            line: 'AllowAgentForwarding no'
+            backup: yes
+          notify: Restart SSH
+
+      # Tässä voit määrittää koko blockille yhteisen tägin
+      tags: ssh_hardening
