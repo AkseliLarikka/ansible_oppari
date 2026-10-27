@@ -31,3 +31,8 @@ Osa auditointityökalujen ehdottamista toimenpiteistä jätettiin automaation ja
 *   **Ulkoinen lokitus (LOGG-2154):** Erillisen Syslog-palvelimen (esim. rsyslog tai Splunk) pystyttäminen toiselle koneelle keskitettyä lokienhallintaa varten rajattiin laajuuden ulkopuolelle.
 *   **Pakettien interaktiiviset tarkistukset (DEB-0810, 0811):** apt-listbugs- tai apt-listchanges-pakettien asennus estäisi täysin automaattiset taustapäivitykset (unattended-upgrades), sillä ne pysäyttävät suorituksen ja vaativat käyttäjältä manuaalista hyväksyntää, jos bugeja löytyy.
 *   **Harkinnanvaraiset toimenpiteet (PRNT-2307, USB-1000):** Tulostinpalvelimen (CUPS) asetusten koventamisen sijaan koko tarpeeton paketti poistetaan Ansiblella. USB-porttien massamuistien estämistä ei otettu käyttöön, jotta ulkoisten varmuuskopiolevyjen kytkeminen palvelimeen säilyy jatkossakin mahdollisena.
+
+## Lähteet
+
+Cybersecurity and Infrastructure Security Agency. (ei pvm.). Securing home networks. https://www.cisa.gov
+Temoshok, D., Choong, Y., Galluzzo, R., & Regenscheid, A. (2025). Digital identity guidelines: Authentication and lifecycle management (NIST SP 800-63B). National Institute of Standards and Technology.
