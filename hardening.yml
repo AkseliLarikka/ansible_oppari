@@ -4,95 +4,64 @@
   become: true
   tasks:
 
-    - name: SSH-7408 koventamistoimenpiteet
-      block:
-        - name: SSH oletusportin muuttaminen 22 -> 2222
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?Port 22'
-            line: 'Port 2222'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Pääkäyttäjän (root) kirjautumisen estäminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?PermitRootLogin'
-            line: 'PermitRootLogin no'
-            backup: yes
-          notify: Restart SSH
-          
-        - name: X11-forwardingin estäminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?X11Forwarding'
-            line: 'X11Forwarding no'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Idle-timeout välin asetuksen määrittäminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?ClientAliveInterval'
-            line: 'ClientAliveInterval 300'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Idle-timeout maksimin asetuksen määrittäminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?ClientAliveCountMax'
-            line: 'ClientAliveCountMax 2'
-            backup: yes
-          notify: Restart SSH
-
-        - name: TCP-forwardingin estäminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?AllowTcpForwarding'
-            line: 'AllowTcpForwarding no'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Lokitustason nostaminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?LogLevel'
-            line: 'LogLevel VERBOSE'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Maksimi kirjautumisyritysten rajoittaminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?MaxAuthTries'
-            line: 'MaxAuthTries 3'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Samanaikaisten istuntojen rajoittaminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?MaxSessions'
-            line: 'MaxSessions 2'
-            backup: yes
-          notify: Restart SSH
-
-        - name: TCPKeepAlive-ominaisuuden poistaminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?TCPKeepAlive'
-            line: 'TCPKeepAlive no'
-            backup: yes
-          notify: Restart SSH
-
-        - name: Agent-forwardingin estäminen
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^#?AllowAgentForwarding'
-            line: 'AllowAgentForwarding no'
-            backup: yes
-          notify: Restart SSH
-
-      # Tässä voit määrittää koko blockille yhteisen tägin
+    - name: SSH-palvelimen asetusten koventaminen (SSH-7408)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^#?Port', line: 'Port 2222' }
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
+        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 2' }
+        - { regexp: '^#?AllowTcpForwarding', line: 'AllowTcpForwarding no' }
+        - { regexp: '^#?LogLevel', line: 'LogLevel VERBOSE' }
+        - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 3' }
+        - { regexp: '^#?MaxSessions', line: 'MaxSessions 2' }
+        - { regexp: '^#?TCPKeepAlive', line: 'TCPKeepAlive no' }
+        - { regexp: '^#?AllowAgentForwarding', line: 'AllowAgentForwarding no' }
+      notify: Restart SSH
       tags: ssh_hardening
+
+    - name: Ytimen koventaminen (KRNL-6000)
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: 'fs.protected_fifos', value: '2' }
+        - { name: 'fs.suid_dumpable', value: '0' }
+        - { name: 'kernel.kptr_restrict', value: '2' }
+        - { name: 'kernel.sysrq', value: '0' }
+        - { name: 'kernel.unprivileged_bpf_disabled', value: '1' }
+        - { name: 'net.core.bpf_jit_harden', value: '2' }
+        - { name: 'net.ipv4.conf.all.forwarding', value: '0' }
+        - { name: 'net.ipv4.conf.all.log_martians', value: '1' }
+        - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+        - { name: 'net.ipv4.conf.default.log_martians', value: '1' }
+      tags: kernel_hardening
+
+    - name: Estetään tarpeettomien verkkoprotokollien käyttö (NETW-3200)
+      lineinfile:
+        path: /etc/modprobe.d/cis.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        create: yes
+      loop:
+        - { regexp: '^#?install dccp', line: 'install dccp /bin/true' }
+        - { regexp: '^#?install sctp', line: 'install sctp /bin/true' }
+        - { regexp: '^#?install rds', line: 'install rds /bin/true' }
+        - { regexp: '^#?install tipc', line: 'install tipc /bin/true' }
+      tags: disable_unnecessary_protocols
+
+    - name: Estetään CUPS-palvelimen käyttö (PRNT-2307)
+      apt:
+        name: 
+          - cups
+          - cups-daemon
+        state: purged
+        autoremove: yes
+      tags: cups_disable
