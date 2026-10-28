@@ -65,3 +65,54 @@
         state: purged
         autoremove: yes
       tags: cups_disable
+    
+    - name: Aseta /etc/login.defs-tiedostoon umask 027 (AUTH-9328) ja tiivistekierrokset (AUTH-9230)
+      lineinfile:
+        path: /etc/login.defs
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^UMASK', line: 'UMASK 027' }
+        - { regexp: '^SHA_CRYPT_MIN_ROUNDS', line: 'SHA_CRYPT_MIN_ROUNDS 10000' }
+        - { regexp: '^SHA_CRYPT_MAX_ROUNDS', line: 'SHA_CRYPT_MAX_ROUNDS 100000' }
+      tags: login_defs
+
+    - name: Tietoturvapakettien asentaminen (DEB-0280, DEB-0880, HRDN-7230, PKGS-7392, PKGS-7394)
+      apt:
+        name:
+          - libpam-tmpdir
+          - fail2ban
+          - rkhunter
+          - unattended-upgrades
+          - apt-show-versions
+        state: present
+        update_cache: yes
+      tags: apt_hardening
+
+    - name: Kääntäjien käyttöoikeuksien rajaaminen pääkäyttäjälle (HRDN-7222)
+      file:
+        path: "{{ item }}"
+        owner: root
+        group: root
+        mode: '0750'
+      loop:
+        - /usr/bin/gcc
+        - /usr/bin/cc
+      ignore_errors: yes
+      tags: compiler_hardening
+
+    - name: Lakisääteisten varoitustekstien lisääminen (BANN-7126, BANN-7130)
+      copy:
+        dest: "{{ item }}"
+        content: |
+          WARNING: This system is for the use of authorized users only.
+          Activities on this system are monitored and recorded.
+          Unauthorized access will be investigated and reported.
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - /etc/issue
+        - /etc/issue.net
+      tags: banner_hardening
