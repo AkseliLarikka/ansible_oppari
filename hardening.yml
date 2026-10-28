@@ -62,7 +62,8 @@
         name: 
           - cups
           - cups-daemon
-        state: purged
+        state: absent
+        purge: yes
         autoremove: yes
       tags: cups_disable
     
@@ -116,3 +117,9 @@
         - /etc/issue
         - /etc/issue.net
       tags: banner_hardening
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted

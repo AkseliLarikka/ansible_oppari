@@ -8,6 +8,7 @@
         upgrade: dist
         autoremove: yes
         autoclean: yes
+        allow_downgrades: yes
       tags: system_update
 
     - name: Tarkistetaan, vaatiiko järjestelmä uudelleenkäynnistyksen
